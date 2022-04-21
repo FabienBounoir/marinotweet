@@ -16,22 +16,30 @@ app.get('/', async (req, res) => {
     const username = req.query.username
     const texte = req.query.texte
 
-    const image = await fs.readFile('./assets/marinotweet.png')
-    const base64Image = new Buffer.from(image).toString('base64');
-    const dataURI = 'data:image/jpeg;base64,' + base64Image
+    const dataURIBackground = 'data:image/jpeg;base64,' + new Buffer.from(await fs.readFile('./assets/marinotweetBackground.png')).toString('base64');
+    const dataURICalque = 'data:image/jpeg;base64,' + new Buffer.from(await fs.readFile('./assets/marinotweetCleanNoPaper.png')).toString('base64');
+
+    const hour = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    const date = new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+
+    //random entre 0 et 100
+    const nbRt = Math.floor(Math.random() * 100)
+    const nbTwt = Math.floor(Math.random() * 100)
+    const likes = Math.floor(Math.random() * 100)
 
     const imageRender = await nodeHtmlToImage({
         html: `<html>
             <head>
             <style>
                 :root {
-                    filter: blur(1px);
+                    font-family: 'Source Sans Pro', 'Lucida Grande', sans-serif;
+                    color: #3B3F43;
                 }
 
                 body {
                     width: 3584px;
                     height: 2018px;
-                    background: url({{imageSource}}) no-repeat center center fixed;
+                    background: url({{dataURIBackground}}) no-repeat center center fixed;
                 }
 
                 img {
@@ -41,6 +49,7 @@ app.get('/', async (req, res) => {
                     left: 1465px;
                     border-radius: 30000em;
                     width: 120px;
+                    filter: blur(1.5px);
                 }
 
                 h1{
@@ -50,9 +59,22 @@ app.get('/', async (req, res) => {
                     font-size: 45px;
                     font-weight: bold;
                     transform: rotate(-4deg);
+                    font-weight: 500;
+                    filter: blur(1.5px);
                 }
 
-                p{
+                h2{
+                    position: fixed;
+                    top: 1220px;
+                    left: 1605px;
+                    font-size: 30px;
+                    font-weight: bold;
+                    transform: rotate(-4deg);
+                    font-weight: 300;
+                    filter: blur(1.5px);
+                }
+
+                .texte {
                     position: fixed;
                     top: 1310px;
                     left: 1490px;
@@ -61,19 +83,43 @@ app.get('/', async (req, res) => {
                     transform: rotate(-4deg);
                     width: 740px;
                     line-height: 1.3;
-                    font-family: 'Source Sans Pro', 'Lucida Grande', sans-serif;
                     word-wrap: break-word;
-                    color: rgb(15, 20, 25);
+                    font-weight: 400;
+                    filter: blur(1.5px);
+                }
+
+                .info {
+                    position: fixed;
+                    top: 1570px;
+                    left: 1500px;
+                    font-size: 29px;
+                    transform: rotate(-4deg);
+                    width: 740px;
+                    line-height: 1.3;
+                    word-wrap: break-word;
+                    font-weight: 300;
+                    filter: blur(1.5px);
                 }
 
                 footer {
                     position: fixed;
                     top: 1675px;
-                    left: 1490px;
+                    left: 1500px;
                     transform: rotate(-4deg);
-                    color: rgb(15, 20, 25);
                     font-size: 29px;
-                    font-family: 'Source Sans Pro', 'Lucida Grande', sans-serif;
+                    filter: blur(1.5px);
+                }
+
+                div {
+                    position: fixed;
+                    width: 3584px;
+                    height: 2018px;
+                    background: url({{dataURICalque}}) no-repeat center center fixed;
+                }
+
+                span {
+                    color: red;
+                    filter: blur(1.5px);
                 }
 
             </style>
@@ -81,12 +127,15 @@ app.get('/', async (req, res) => {
             <body>
             <img src="{{imageAvatar}}" />
             <h1>{{username}}</h1>
-            <p>{{texte}}</p>
-            <footer><b>76</b> Retweets   <b>4</b> Tweets cités   <b>58</b> j'aime</footer>
+            <h2>@{{username}}</h2>
+            <p class="texte">{{texte}}</p>
+            <p class="info">{{hour}}ㆍ{{date}}</p>
+            <footer><b>{{nbRt}}</b> Retweets   <b>{{nbTwt}}</b> Tweets cités   <b>{{likes}}</b> j'aime</footer>
+            <div></div>
             </body>
         </html>
         `,
-        content: { imageSource: dataURI, imageAvatar: url, username, texte }
+        content: { dataURIBackground, dataURICalque, imageAvatar: url, username, texte, hour, date, nbRt, nbTwt, likes },
     })
 
     res.writeHead(200, { 'Content-Type': 'image/png' });
