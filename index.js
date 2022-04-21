@@ -2,11 +2,12 @@ const express = require('express')
 const fs = require('fs/promises')
 const app = express()
 const port = 1234
+const puppeteer = require('puppeteer');
 
-const nodeHtmlToImage = require('node-html-to-image')
-const font2base64 = require('node-font2base64')
 
-const _data = font2base64.encodeToDataUrlSync('./assets/chirp.ttf')
+// const nodeHtmlToImage = require('node-html-to-image')
+// const font2base64 = require('node-font2base64')
+
 
 app.get('/', async (req, res) => {
     // console.log(image)
@@ -27,8 +28,18 @@ app.get('/', async (req, res) => {
     const nbTwt = Math.floor(Math.random() * 100)
     const likes = Math.floor(Math.random() * 100)
 
-    const imageRender = await nodeHtmlToImage({
-        html: `<html>
+    const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        headless: true
+    });
+    const page = await browser.newPage();
+    await page.setViewport({
+        width: 3584,
+        height: 2018,
+        deviceScaleFactor: 1,
+    });
+
+    await page.setContent(`<html>
             <head>
             <style>
                 :root {
@@ -134,13 +145,30 @@ app.get('/', async (req, res) => {
             <div></div>
             </body>
         </html>
-        `,
-        content: { dataURIBackground, dataURICalque, imageAvatar: url, username, texte, hour, date, nbRt, nbTwt, likes },
-    })
+        `
+        .replace('{{dataURIBackground}}', dataURIBackground)
+        .replace('{{dataURICalque}}', dataURICalque)
+        .replace('{{imageAvatar}}', url)
+        .replace(/{{username}}/g, username)
+        .replace('{{texte}}', texte)
+        .replace('{{hour}}', hour)
+        .replace('{{date}}', date)
+        .replace('{{nbRt}}', nbRt)
+        .replace('{{nbTwt}}', nbTwt)
+        .replace('{{likes}}', likes)
+    );
+
+    const buffer = await page.screenshot({
+        encoding: 'binary',
+        type: 'jpeg',
+        quality: 100
+    });
+
+    await browser.close();
 
     res.writeHead(200, { 'Content-Type': 'image/png' });
-    res.end(imageRender, 'binary');
-})
+    res.end(buffer, "binary");
+});
 
 app.listen(port, () => {
     console.log(`Serveur ecoute sur le port ${port}`)

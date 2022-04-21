@@ -10,7 +10,6 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.3",
-    "node-font2base64": "^0.7.1",
-    "node-html-to-image": "^3.2.4"
+    "puppeteer": "^13.6.0"
   }
 }
